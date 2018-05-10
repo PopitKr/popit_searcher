@@ -71,6 +71,7 @@ public class PostFetcher {
       String displayName = (String) map.get("display_name");
       String content =(String) map.get("post_content");
       String title = (String) map.get("post_title");
+      String postName = (String) map.get("post_name");
       Timestamp postDate = (Timestamp) map.get("post_date");
 
       Post post = new Post();
@@ -79,6 +80,7 @@ public class PostFetcher {
       post.setDisplayName(displayName);
       post.setContent(content);
       post.setTitle(title);
+      post.setPostName(postName);
       post.setPostDate(postDate);
 
       List<List<String>> terms = getTerms(postId.longValue());

@@ -16,9 +16,14 @@ public class SearchController {
 
   @RequestMapping(value = "/api/search/{keyword}", method = RequestMethod.GET)
   @ResponseBody
-  public List<Long> search(@PathVariable("keyword") String keyword) {
+  public SearchResult search(
+      @PathVariable("keyword") String keyword,
+      @RequestParam("page") Integer page) {
+    if (page == null) {
+      page = 1;
+    }
     try {
-      return popitSearcher.searchPost(keyword);
+      return popitSearcher.searchPost(keyword, page);
     } catch (Exception e) {
       throw new RuntimeException(e.getMessage(), e);
     }

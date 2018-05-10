@@ -2,6 +2,7 @@ package kr.popit.searcher;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.logging.log4j.util.Strings;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.ko.KoreanAnalyzer;
@@ -40,7 +41,7 @@ public class PopitSearcher {
     this.indexPath = Paths.get(dataPath);
   }
 
-  public List<Long> searchPost(String keyword) throws ParseException, IOException, InvalidTokenOffsetsException {
+  public SearchResult searchPost(String keyword, int page) throws ParseException, IOException, InvalidTokenOffsetsException {
     synchronized(lock) {
       if (this.searcher == null) {
         this.reader = DirectoryReader.open(FSDirectory.open(indexPath));
@@ -59,7 +60,7 @@ public class PopitSearcher {
 
     Query finalQuery = new MultiFieldQueryParser(fields, analyzer, boost).parse(keyword);
 
-    TopDocs hits = searcher.search(finalQuery, 50);
+    TopDocs hits = searcher.search(finalQuery, 100);
     Formatter formatter = new SimpleHTMLFormatter();
     QueryScorer scorer = new QueryScorer(finalQuery);
     Highlighter highlighter = new Highlighter(formatter, scorer);
@@ -67,23 +68,31 @@ public class PopitSearcher {
     highlighter.setTextFragmenter(fragmenter);
 
     long totalHits = hits.totalHits;
+    List<Post> posts = new ArrayList<Post>();
 
-    LOG.info(keyword + "==============> total hit:" + totalHits);
-    List<Long> postIds = new ArrayList<Long>();
-    for (ScoreDoc sd: hits.scoreDocs) {
+    int start = (page - 1) * 10;
+    for (int i = start; i < hits.totalHits; i++) {
+      ScoreDoc sd = hits.scoreDocs[i];
       Document doc = searcher.doc(sd.doc);
-      LOG.info(">>>>>" + doc.get("post_id") + ">" + doc.get("title"));
-      postIds.add(Long.parseLong(doc.get("post_id")));
+
+      Post post = new Post();
+      post.setId(Long.parseLong(doc.get("post_id")));
+
       String content = doc.get("content");
       TokenStream stream = TokenSources.getAnyTokenStream(this.reader, sd.doc, "content", doc, analyzer);
       String[] frags = highlighter.getBestFragments(stream, content, 5);
-      for (String frag : frags)
-      {
-        System.out.println(frag);
+      String highlightedText = "";
+      for (String frag : frags) {
+        highlightedText += "<p>" + frag + "</p>";
       }
-      System.out.println("=======================");
+      post.setHighlightedText(highlightedText);
+
+      posts.add(post);
+      if (posts.size() >= 10) {
+        break;
+      }
     }
 
-    return postIds;
+    return new SearchResult(totalHits, posts);
   }
 }

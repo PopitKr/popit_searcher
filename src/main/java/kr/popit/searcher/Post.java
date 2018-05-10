@@ -8,9 +8,11 @@ public class Post {
   private String displayName;
   private String content;
   private String title;
+  private String postName;
   private Timestamp postDate;
   private String[] categories;
   private String[] tags;
+  private String highlightedText;
 
   public long getId() {
     return id;
@@ -76,4 +78,19 @@ public class Post {
     this.tags = tags;
   }
 
+  public String getPostName() {
+    return postName;
+  }
+
+  public void setPostName(String postName) {
+    this.postName = postName;
+  }
+
+  public String getHighlightedText() {
+    return highlightedText;
+  }
+
+  public void setHighlightedText(String highlightedText) {
+    this.highlightedText = highlightedText;
+  }
 }
